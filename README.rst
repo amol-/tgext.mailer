@@ -66,7 +66,7 @@ application wide mailer is returned (Do not use it inside a request)::
    mailer = get_mailer(request)
 
 To send a message, you must first create a
-:class:`tgext.mailer.message.Message` instance::
+``tgext.mailer.message.Message`` instance::
 
     from tgext.mailer import Message
 
@@ -151,7 +151,7 @@ in multiple transactions.
 Attachments
 -----------
 
-Attachments are added using the :class:`tgext.mailer.message.Attachment`
+Attachments are added using the ``tgext.mailer.message.Attachment``
 class::
 
     from tgext.mailer import Attachment
