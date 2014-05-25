@@ -1,5 +1,5 @@
 [report]
 omit =
-    tests/*
+    tgext/mailer/tests/*
     */python?.?/*
     */site-packages/nose/*
