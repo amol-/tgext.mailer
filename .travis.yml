@@ -1,0 +1,18 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+  - "3.2"
+  - "3.3"
+
+install:
+  - "pip install coverage"
+  - "pip install nose"
+  - "pip install --no-use-wheel -e .[testing]"
+
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install coveralls && export HAS_COVERALLS=1; fi
+
+script: "nosetests -v --with-coverage --cover-package=tgext.mailer --cover-erase"
+
+after_success:
+  - if [[ $HAS_COVERALLS ]]; then coveralls; fi

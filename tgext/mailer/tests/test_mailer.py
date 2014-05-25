@@ -1,0 +1,268 @@
+import unittest
+
+
+class _Base(unittest.TestCase):
+
+    _tempdir = None
+
+    def tearDown(self):
+        if self._tempdir is not None:
+            from shutil import rmtree
+            rmtree(self._tempdir)
+
+    def _makeTempdir(self):
+        from tempfile import mkdtemp
+        if self._tempdir is None:
+            self._tempdir = mkdtemp()
+        return self._tempdir
+
+
+class DebugMailerTests(_Base):
+
+    def _getTargetClass(self):
+        from tgext.mailer.mailer import DebugMailer
+        return DebugMailer
+
+    def _makeOne(self, tld=None):
+        if tld is None:
+            tld = self._makeTempdir()
+        return self._getTargetClass()(tld)
+
+    def _listFiles(self):
+        from os import listdir
+        return listdir(self._tempdir)
+
+    def test___init___wo_existing_directory(self):
+        from os.path import isdir
+        from shutil import rmtree
+        tempdir = self._makeTempdir()
+        rmtree(tempdir)
+        mailer = self._makeOne(tempdir)
+        self.assertTrue(isdir(tempdir))
+
+    def test_from_settings(self):
+        tempdir = self._makeTempdir()
+        settings = {'mail.top_level_directory': tempdir}
+        mailer = self._getTargetClass().from_settings(settings, 'mail.')
+        self.assertEqual(mailer.tld, tempdir)
+
+    def test_from_settings_wo_tld(self):
+        tempdir = self._makeTempdir()
+        self.assertRaises(ValueError,
+                          self._getTargetClass().from_settings, None)
+
+    def test__send(self):
+        mailer = self._makeOne()
+        msg = _makeMessage()
+        mailer.send(msg)
+        files = self._listFiles()
+        self.assertEqual(len(files), 1)
+
+class DummyMailerTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from tgext.mailer.mailer import DummyMailer
+        return DummyMailer
+
+    def _makeOne(self):
+        return self._getTargetClass()()
+
+    def test_send(self):
+        mailer = self._makeOne()
+        msg = _makeMessage()
+        mailer.send(msg)
+        self.assertEqual(mailer.outbox, [msg])
+
+    def test_send_immediately(self):
+        mailer = self._makeOne()
+        msg = _makeMessage()
+        mailer.send_immediately(msg)
+        self.assertEqual(mailer.outbox, [msg])
+
+    def test_send_immediately_w_fail_silently(self):
+        mailer = self._makeOne()
+        msg = _makeMessage()
+        mailer.send_immediately(msg, True)
+        self.assertEqual(mailer.outbox, [msg])
+
+    def test_send_to_queue(self):
+        mailer = self._makeOne()
+        msg = _makeMessage()
+        mailer.send_to_queue(msg)
+        self.assertEqual(mailer.queue, [msg])
+
+
+class TestSMTP_SSLMailer(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from tgext.mailer.mailer import SMTP_SSLMailer
+        return SMTP_SSLMailer
+
+    def _makeOne(self, *arg, **kw):
+        return self._getTargetClass()(*arg, **kw)
+
+    def test_ctor(self):
+        inst = self._makeOne(keyfile='keyfile', certfile='certfile')
+        self.assertEqual(inst.keyfile, 'keyfile')
+        self.assertEqual(inst.certfile, 'certfile')
+
+    def test_smtp_factory_smtp_is_None(self):
+        inst = self._makeOne()
+        inst.smtp = None
+        self.assertRaises(RuntimeError, inst.smtp_factory)
+
+    def test_smtp_factory_smtp_is_not_None(self):
+        inst = self._makeOne(
+            debug_smtp=9,
+            hostname='hostname',
+            port=25,
+            certfile='certfile',
+            keyfile='keyfile'
+            )
+        inst.smtp = DummyConnectionFactory
+        conn = inst.smtp_factory()
+        self.assertEqual(conn.hostname, 'hostname')
+        self.assertEqual(conn.port, '25')
+        self.assertEqual(conn.certfile, 'certfile')
+        self.assertEqual(conn.keyfile, 'keyfile')
+        self.assertEqual(conn.debuglevel, 9)
+
+
+class MailerTests(_Base):
+
+    def _getTargetClass(self):
+        from tgext.mailer.mailer import Mailer
+        return Mailer
+
+    def _makeOne(self, *args, **kw):
+        return self._getTargetClass()(*args, **kw)
+
+    def test___init___w_ssl(self):
+        from smtplib import SMTP
+        from tgext.mailer._compat import SMTP_SSL
+        mailer = self._makeOne(ssl=True)
+        mailer
+        if SMTP_SSL is not None:
+            self.assertEqual(mailer.direct_delivery.mailer.smtp, SMTP_SSL)
+        else:  # pragma: no cover
+            self.assertEqual(mailer.direct_delivery.mailer.smtp, SMTP)
+
+    def test_from_settings(self):
+        from smtplib import SMTP
+        from tgext.mailer._compat import SMTP_SSL
+        settings = {'mymail.host': 'my.server.com',
+                    'mymail.port': 123,
+                    'mymail.username': 'tester',
+                    'mymail.password': 'test',
+                    'mymail.tls': 'false',
+                    'mymail.ssl': True,
+                    'mymail.keyfile': 'ssl.key',
+                    'mymail.certfile': 'ssl.crt',
+                    'mymail.queue_path': '/tmp',
+                    'mymail.debug': 1
+        }
+        mailer = self._getTargetClass().from_settings(settings,
+                                                      prefix='mymail.')
+        self.assertEqual(mailer.direct_delivery.mailer.hostname,
+                         'my.server.com')
+        self.assertEqual(mailer.direct_delivery.mailer.port, 123)
+        self.assertEqual(mailer.direct_delivery.mailer.username, 'tester')
+        self.assertEqual(mailer.direct_delivery.mailer.password, 'test')
+        self.assertEqual(mailer.direct_delivery.mailer.force_tls, False)
+        if SMTP_SSL is not None:
+            self.assertEqual(mailer.direct_delivery.mailer.smtp, SMTP_SSL)
+        else:  # pragma: no cover
+            self.assertEqual(mailer.direct_delivery.mailer.smtp, SMTP)
+        self.assertEqual(mailer.direct_delivery.mailer.keyfile, 'ssl.key')
+        self.assertEqual(mailer.direct_delivery.mailer.certfile, 'ssl.crt')
+        self.assertEqual(mailer.queue_delivery.queuePath, '/tmp')
+        self.assertEqual(mailer.direct_delivery.mailer.debug_smtp, 1)
+
+    def test_send_immediately(self):
+        import socket
+        mailer = self._makeOne(host='localhost', port='28322')
+        msg = _makeMessage()
+        self.assertRaises(socket.error,
+                          mailer.send_immediately,
+                          msg)
+
+    def test_send_immediately_and_fail_silently(self):
+        mailer = self._makeOne(host='localhost', port='28322')
+        msg = _makeMessage()
+
+        result = mailer.send_immediately(msg, True)
+        self.assertEqual(result, None)
+
+    def test_send_immediately_multipart(self):
+        mailer = self._makeOne()
+        utf_8_encoded = b'mo \xe2\x82\xac'
+        utf_8 = utf_8_encoded.decode('utf_8')
+        text_string = utf_8
+        html_string = '<p>' + utf_8 + '</p>'
+        msg = _makeMessage(body=text_string, html=html_string)
+        smtp_mailer = DummyMailer()
+        mailer.smtp_mailer = smtp_mailer
+        mailer.send_immediately(msg, True)
+        self.assertEqual(len(smtp_mailer.out), 1)
+
+    def test_send(self):
+        mailer = self._makeOne()
+        msg = _makeMessage()
+        smtp_mailer = DummyMailer()
+        mailer.smtp_mailer = smtp_mailer
+        mailer.send(msg)
+        self.assertEqual(len(smtp_mailer.out), 0)
+
+    def test_send_to_queue_unconfigured(self):
+        msg = _makeMessage()
+        mailer = self._makeOne()
+        self.assertRaises(RuntimeError, mailer.send_to_queue, msg)
+
+    def test_send_to_queue(self):
+        import os
+        test_queue = os.path.join(self._makeTempdir(), 'test_queue')
+        for dir in ('cur', 'new', 'tmp'):
+            os.makedirs(os.path.join(test_queue, dir))
+        mailer = self._makeOne(queue_path=test_queue)
+        msg = _makeMessage()
+        queuedelivery = DummyMailer()
+        mailer.queue_delivery = queuedelivery
+        mailer.send_to_queue(msg)
+        self.assertEqual(len(queuedelivery.out), 1)
+
+
+class DummyConnectionFactory(object):
+
+    def __init__(self, hostname, port, keyfile=None, certfile=None):
+        self.hostname = hostname
+        self.port = port
+        self.keyfile = keyfile
+        self.certfile = certfile
+
+    def set_debuglevel(self, level):
+        self.debuglevel = level
+
+
+class DummyMailer(object):
+
+    def __init__(self, raises=None):
+        self.out = []
+        self.raises = raises
+
+    def send(self, frm, to, msg):
+        if self.raises:
+            raise self.raises
+        self.out.append((frm, to, msg))
+
+
+def _makeMessage(subject="testing",
+                sender="sender@example.com",
+                recipients=["tester@example.com"],
+                body="test",
+                **kw):
+    from tgext.mailer.message import Message
+    return Message(subject=subject,
+                   sender=sender,
+                   recipients=recipients,
+                   body=body,
+                   **kw)
