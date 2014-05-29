@@ -98,6 +98,7 @@ The available settings are listed below.
 ==========================      ====================================            ===============================
 Setting                         Default                                         Description
 ==========================      ====================================            ===============================
+**mail.debugmailer**            **False**                                       Store emails on disk for debugging
 **mail.host**                   ``localhost``                                   SMTP host
 **mail.port**                   ``25``                                          SMTP port
 **mail.username**               **None**                                        SMTP username
@@ -111,6 +112,8 @@ Setting                         Default                                         
 **mail.debug**                  **0**                                           SMTP debug level
 ==========================      ====================================            ===============================
 
+In test units that have to check for sent email, make sure to set **mail.debugmailer** to ``"dummy"``
+it will save outgoing emails in ``mailer.output`` instead of actually sending them.
 
 Transactions
 ------------
