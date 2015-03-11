@@ -40,7 +40,6 @@ class SetupMailer(object):
             mailer_factory = self._create_standard_mailer
 
         config['tg.app_globals']._mailer_factory = mailer_factory
-        self.configurator.register_wrapper(RequestMailerAppWrapper)
 
         global_mailer = mailer_factory(config)
         config['tg.app_globals']._mailer = global_mailer

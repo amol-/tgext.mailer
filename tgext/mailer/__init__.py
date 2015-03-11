@@ -7,9 +7,11 @@ def plugme(configurator, options=None):
         options = {}
 
     from tg.configuration import milestones
-    from .plugmailer import SetupMailer
+    from .plugmailer import SetupMailer, RequestMailerAppWrapper
 
-    milestones.config_ready.register(SetupMailer(configurator, options))
+    milestones.environment_loaded.register(SetupMailer(configurator, options))
+    configurator.register_wrapper(RequestMailerAppWrapper)
+    
     return dict(appid='tgext.mailer')
 
 
