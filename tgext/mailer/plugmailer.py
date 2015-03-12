@@ -8,8 +8,7 @@ from tgext.mailer.mailer import Mailer, DebugMailer, DummyMailer
 
 
 class SetupMailer(object):
-    def __init__(self, configurator, options):
-        self.configurator = configurator
+    def __init__(self, options):
         self.options = options
 
     def _create_standard_mailer(self, config):
@@ -23,7 +22,7 @@ class SetupMailer(object):
         path = os.path.join(os.getcwd(), 'mail')
         return DebugMailer(path)
 
-    def __call__(self):
+    def __call__(self, app):
         try:
             # If specified on plugtime, force the specified one
             # useful for tests or scripts.
@@ -45,6 +44,7 @@ class SetupMailer(object):
         config['tg.app_globals']._mailer = global_mailer
 
         log.info('Configured %s', global_mailer.__class__.__name__)
+        return app
 
 
 class RequestMailerAppWrapper(object):

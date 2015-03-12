@@ -6,10 +6,10 @@ def plugme(configurator, options=None):
     if options is None:  # pragma: no cover
         options = {}
 
-    from tg.configuration import milestones
+    from tg import hooks
     from .plugmailer import SetupMailer, RequestMailerAppWrapper
 
-    milestones.environment_loaded.register(SetupMailer(configurator, options))
+    hooks.register('before_config', SetupMailer(options))
     configurator.register_wrapper(RequestMailerAppWrapper)
     
     return dict(appid='tgext.mailer')
