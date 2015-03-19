@@ -1,2 +1,2 @@
 global-exclude *.pyc
-
+recursive-exclude tgext/mailer/tests *
