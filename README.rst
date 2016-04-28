@@ -93,7 +93,7 @@ to make sure it gets sent even in case of transaction failures, use::
 Configuration File Options
 --------------------------------
 
-The available settings are listed below.
+The available settings are listed below. Place them under ``[app:main]`` in your configuration *.ini file.
 
 ==========================      ====================================            ===============================
 Setting                         Default                                         Description
