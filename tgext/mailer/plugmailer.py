@@ -2,7 +2,7 @@ from tg import config
 from tg.support.converters import asbool
 
 import logging
-log = logging.getLogger('tgext.myextension')
+log = logging.getLogger('tgext.mailer')
 
 from tgext.mailer.mailer import Mailer, DebugMailer, DummyMailer
 
