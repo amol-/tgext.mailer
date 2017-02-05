@@ -33,7 +33,7 @@ setup(name='tgext.mailer',
       zip_safe=False,
       install_requires=[
           "TurboGears2 >= 2.3.2",
-          "repoze.sendmail == 4.1",
+          "repoze.sendmail == 4.3",
       ],
       extras_require={
            # Used by Travis and Coverage due to setup.py nosetests
