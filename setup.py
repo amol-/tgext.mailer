@@ -7,7 +7,7 @@ try:
 except IOError:
     README = ''
 
-version = "0.0.2"
+version = "0.1.0"
 
 test_requirements = [
   'nose',
