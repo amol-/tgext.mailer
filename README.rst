@@ -7,11 +7,8 @@ About tgext.mailer
 .. image:: https://coveralls.io/repos/amol-/tgext.mailer/badge.png
     :target: https://coveralls.io/r/amol-/tgext.mailer
 
-.. image:: https://pypip.in/v/tgext.mailer/badge.png
-   :target: https://pypi.python.org/pypi/tgext.mailer
-
-.. image:: https://pypip.in/d/tgext.mailer/badge.png
-   :target: https://pypi.python.org/pypi/tgext.mailer
+.. image:: https://img.shields.io/pypi/v/tgext.mailer.svg
+    :target: https://pypi.python.org/pypi/tgext.mailer
 
 tgext.mailer is a TurboGears2 extension for sending emails with transaction
 manager integration. Whenever the transaction manager provided with TurboGears
