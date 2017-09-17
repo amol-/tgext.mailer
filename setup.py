@@ -11,7 +11,7 @@ version = "0.2.0"
 
 test_requirements = [
   'nose',
-  'webtest',
+  'webtest<=2.0.24',
 ]
 
 setup(name='tgext.mailer',
