@@ -9,8 +9,14 @@ def plugme(configurator, options=None):
     from tg import hooks
     from .plugmailer import SetupMailer, RequestMailerAppWrapper
 
-    hooks.register('before_config', SetupMailer(options))
-    configurator.register_wrapper(RequestMailerAppWrapper)
+    if hasattr(configurator, 'register_wrapper'):
+        # TG2.3
+        hooks.register('before_config', SetupMailer(options))
+        configurator.register_wrapper(RequestMailerAppWrapper)
+    else:
+        # TG2.4+
+        hooks.register('before_wsgi_middlewares', SetupMailer(options))
+        configurator.register_application_wrapper(RequestMailerAppWrapper)
     
     return dict(appid='tgext.mailer')
 
